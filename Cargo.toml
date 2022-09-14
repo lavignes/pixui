@@ -1,0 +1,10 @@
+[package]
+name = "pixui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fxhash = "0.2"
+
+[dev-dependencies]
+sdl2 = { version = "0.35", features = ["bundled"] }
