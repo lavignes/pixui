@@ -1,11 +1,9 @@
-use std::fmt::Debug;
-
 use crate::{
     gfx::{BlendMode, Color, Point, Rect, Scalar, Size, WriteSurface},
     ui::{Hit, Widget},
 };
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Border<'a, I> {
     pub id: Option<I>,
     pub child: Option<&'a dyn Widget<I>>,
@@ -13,7 +11,7 @@ pub struct Border<'a, I> {
     pub color: Color,
 }
 
-impl<'a, I: Copy + Debug> Widget<I> for Border<'a, I> {
+impl<'a, I: Copy> Widget<I> for Border<'a, I> {
     fn measure(&self, limits: Size) -> Size {
         let size = Size::new(self.weight, self.weight) * 2;
         if let Some(child) = self.child {

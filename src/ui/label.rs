@@ -1,11 +1,10 @@
-use std::fmt::Debug;
+use std::cell::RefCell;
 
 use crate::{
     gfx::{BlendMode, Color, Font, Point, Rect, Size, WriteSurface},
     ui::{Hit, Widget},
 };
 
-#[derive(Debug)]
 pub struct Label<'a, I> {
     pub id: Option<I>,
     pub font: Option<&'a dyn Font>,
@@ -25,10 +24,10 @@ impl<'a, I> Default for Label<'a, I> {
     }
 }
 
-impl<'a, I: Copy + Debug> Widget<I> for Label<'a, I> {
+impl<'a, I: Copy> Widget<I> for Label<'a, I> {
     fn measure(&self, limits: Size) -> Size {
         if let Some(font) = self.font {
-            font.measure(limits, self.text).limit(limits)
+            font.measure(limits, self.text)
         } else {
             Size::ZERO
         }

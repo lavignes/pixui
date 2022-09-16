@@ -1,17 +1,15 @@
-use std::fmt::Debug;
-
 use crate::{
     gfx::{Point, Rect, Size, WriteSurface},
     ui::{Hit, Widget},
 };
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Stack<'a, I> {
     pub id: Option<I>,
     pub children: &'a [&'a dyn Widget<I>],
 }
 
-impl<'a, I: Copy + Debug> Widget<I> for Stack<'a, I> {
+impl<'a, I: Copy> Widget<I> for Stack<'a, I> {
     fn measure(&self, limits: Size) -> Size {
         let mut max_size = Size::ZERO;
         for child in self.children {

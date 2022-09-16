@@ -1,11 +1,9 @@
-use std::fmt::Debug;
-
 use crate::{
     gfx::{Point, Rect, Scalar, Size, WriteSurface},
     ui::{Hit, Widget},
 };
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Margin<'a, I> {
     pub id: Option<I>,
     pub child: Option<&'a dyn Widget<I>>,
@@ -15,7 +13,7 @@ pub struct Margin<'a, I> {
     pub right: Scalar,
 }
 
-impl<'a, I: Copy + Debug> Widget<I> for Margin<'a, I> {
+impl<'a, I: Copy> Widget<I> for Margin<'a, I> {
     fn measure(&self, limits: Size) -> Size {
         let size: Size = (self.left + self.right, self.top + self.bottom).into();
         if let Some(child) = self.child {

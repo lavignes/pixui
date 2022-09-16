@@ -1,20 +1,22 @@
 mod border;
+mod handler;
 mod hbox;
 mod label;
 mod margin;
 mod stack;
 mod vbox;
 
-use std::fmt::Debug;
+use std::{cell::RefCell, fmt::Debug};
 
 pub use border::*;
+pub use handler::*;
 pub use hbox::*;
 pub use label::*;
 pub use margin::*;
 pub use stack::*;
 pub use vbox::*;
 
-use crate::gfx::{BlendMode, Color, Point, Rect, Size, WriteSurface};
+use crate::gfx::{Point, Rect, Size, WriteSurface};
 
 pub struct UI {}
 
@@ -83,9 +85,53 @@ impl UI {
     }
 }
 
-pub trait Widget<I>: Debug {
+pub trait Widget<I> {
     fn measure(&self, limits: Size) -> Size;
 
     fn render(&self, bounds: Rect, cursor: Point, surface: &mut dyn WriteSurface)
         -> Option<Hit<I>>;
+}
+
+struct Callbacks<M> {
+    measure: Option<M>,
+}
+
+pub struct Interceptor<'a, I, M> {
+    state: RefCell<Callbacks<M>>,
+    child: &'a dyn Widget<I>,
+}
+
+impl<'a, I, M> Interceptor<'a, I, M> {
+    #[inline]
+    pub fn measure(measure: M, child: &'a dyn Widget<I>) -> Self {
+        Self {
+            state: RefCell::new(Callbacks {
+                measure: Some(measure),
+            }),
+            child,
+        }
+    }
+}
+
+impl<'a, I, M: FnMut(Size, Size) -> Size> Widget<I> for Interceptor<'a, I, M> {
+    #[inline]
+    fn measure(&self, limits: Size) -> Size {
+        let size = self.child.measure(limits);
+        let mut state = self.state.borrow_mut();
+        if let Some(measure) = &mut state.measure {
+            measure(limits, size)
+        } else {
+            size
+        }
+    }
+
+    #[inline]
+    fn render(
+        &self,
+        bounds: Rect,
+        cursor: Point,
+        surface: &mut dyn WriteSurface,
+    ) -> Option<Hit<I>> {
+        self.child.render(bounds, cursor, surface)
+    }
 }

@@ -5,7 +5,7 @@ use crate::{
     ui::{Hit, Widget},
 };
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct HBox<'a, I> {
     pub id: Option<I>,
     pub children: &'a [&'a dyn Widget<I>],

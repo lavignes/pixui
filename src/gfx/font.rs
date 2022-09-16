@@ -12,7 +12,7 @@ use crate::gfx::{
     BlendMode, Color, Point, ReadSurface, Rect, Scalar, Size, VecSurface, WriteSurface,
 };
 
-pub trait Font: Debug {
+pub trait Font {
     fn line_height(&self) -> Scalar;
 
     fn glyph(&self, c: char) -> Option<&Glyph>;
@@ -146,7 +146,6 @@ pub struct Glyph {
     surface: VecSurface,
 }
 
-#[derive(Debug)]
 pub struct BdfFont {
     line_height: Scalar,
     glyphs: FxHashMap<char, Glyph>,
@@ -305,7 +304,7 @@ impl Font for BdfFont {
         self.glyphs.get(&c)
     }
 
-    // TODO: LRU cache
+    // // TODO: LRU cache
     // fn measure(&self, size: Size, text: &str) -> Size {
     //     {
     //         let cache = self.measure_cache.borrow();

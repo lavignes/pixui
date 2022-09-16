@@ -8,7 +8,7 @@ use pixui::{
     gfx::{
         BdfFont, BlendMode, Color, Point, Rect, Scalar, Size, Surface, U8SliceSurface, WriteSurface,
     },
-    ui::{Border, Feedback, HBox, Label, Margin, VBox, UI},
+    ui::{Border, DragHandler, Feedback, HitHandler, Interceptor, Label, Margin, TapHandler, UI},
 };
 use sdl2::{
     event::{Event, WindowEvent},
@@ -55,11 +55,17 @@ fn main() -> io::Result<()> {
         "examples/ProggyCleanSZ.bdf",
     )?))?;
 
-    let mut text = String::new();
     let mut fps = String::new();
+
+    let mut text = String::new();
+    let mut text_color = Color::WHITE;
+
     let mut cursor = Point::ZERO;
     let mut touch = false;
-    let mut offset = Point::ZERO;
+
+    let mut drag = DragHandler::new();
+    let mut click = TapHandler::new();
+    let mut hit = HitHandler::new();
 
     'running: loop {
         if event_timer.elapsed() >= Duration::from_millis(16) {
@@ -102,6 +108,7 @@ fn main() -> io::Result<()> {
             }
         }
 
+        let mut size = Size::ZERO;
         let mut feedback = Feedback::default();
         texture
             .with_lock(None, |pixels, _| {
@@ -110,10 +117,16 @@ fn main() -> io::Result<()> {
 
                 surface.fill(surface.bounds(), Color::BLACK, BlendMode::None);
                 feedback = ui.render(
-                    surface.bounds().inset(cursor.y, cursor.x, 0, 0),
+                    surface.bounds().inset(
+                        drag.translation().y.max(0),
+                        drag.translation().x.max(0),
+                        0,
+                        0,
+                    ),
                     &mut surface,
                     cursor,
                     &Border {
+                        id: Some("my widget"),
                         weight: 1,
                         color: Color::opaque(0, 255, 0),
                         child: Some(&Margin {
@@ -129,17 +142,22 @@ fn main() -> io::Result<()> {
                                     left: 8,
                                     bottom: 8,
                                     right: 8,
-                                    child: Some(&Label {
-                                        id: Some("label"),
-                                        text: format!(
-                                            "({}, {}) :: {fps} :: {}",
-                                            cursor.x, cursor.y, text
-                                        )
-                                        .as_str(),
-                                        color: Color::opaque(255, 0, 0),
-                                        font: Some(&font),
-                                        ..Default::default()
-                                    }),
+                                    child: Some(&Interceptor::measure(
+                                        |_, s| {
+                                            size = s;
+                                            s
+                                        },
+                                        &Label {
+                                            text: format!(
+                                                "({}, {}) :: {fps} :: {}",
+                                                cursor.x, cursor.y, text
+                                            )
+                                            .as_str(),
+                                            color: text_color,
+                                            font: Some(&font),
+                                            ..Default::default()
+                                        },
+                                    )),
                                     ..Default::default()
                                 }),
                                 ..Default::default()
@@ -155,16 +173,20 @@ fn main() -> io::Result<()> {
         canvas.copy(&texture, None, None).unwrap();
         canvas.present();
 
-        if let Some(hit) = feedback.hit() {
-            if touch {
-                dbg!(hit, cursor);
-                offset = cursor.relative_to(hit.bounds().origin);
-            }
+        drag.handle("my widget", touch, cursor, feedback.hit());
+
+        if click.handle("my widget", touch, feedback.hit()) {
+            text.push_str("CLICK ");
+        }
+
+        if hit.handle("my widget", feedback.hit()) {
+            text_color = Color::opaque(255, 0, 0);
+        } else {
+            text_color = Color::WHITE
         }
 
         frames += 1;
         if frame_timer.elapsed() >= Duration::from_secs(1) {
-            eprintln!("fps: {frames}");
             fps = format!("fps: {frames}");
             frames = 0;
             frame_timer = Instant::now();

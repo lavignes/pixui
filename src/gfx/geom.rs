@@ -15,14 +15,6 @@ impl Point {
     pub const fn new(x: Scalar, y: Scalar) -> Self {
         Self { x, y }
     }
-
-    #[inline]
-    pub const fn relative_to(&self, point: Point) -> Self {
-        Self {
-            x: self.x - point.x,
-            y: self.y - point.y,
-        }
-    }
 }
 
 impl<T: Into<Scalar>, U: Into<Scalar>> From<(T, U)> for Point {
