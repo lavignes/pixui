@@ -15,6 +15,14 @@ impl Point {
     pub const fn new(x: Scalar, y: Scalar) -> Self {
         Self { x, y }
     }
+
+    #[inline]
+    pub const fn relative_to(&self, point: Point) -> Self {
+        Self {
+            x: self.x - point.x,
+            y: self.y - point.y,
+        }
+    }
 }
 
 impl<T: Into<Scalar>, U: Into<Scalar>> From<(T, U)> for Point {
@@ -103,6 +111,14 @@ impl Size {
             height: self.height.min(size.height),
         }
     }
+
+    #[inline]
+    pub fn max(&self, size: Self) -> Self {
+        Self {
+            width: self.width.max(size.width),
+            height: self.height.max(size.height),
+        }
+    }
 }
 
 impl<T: Into<Scalar>, U: Into<Scalar>> From<(T, U)> for Size {
@@ -156,8 +172,8 @@ where
 
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq)]
 pub struct Rect {
-    pub(crate) origin: Point,
-    pub(crate) size: Size,
+    pub origin: Point,
+    pub size: Size,
 }
 
 impl Rect {
@@ -221,12 +237,23 @@ impl Rect {
     #[inline]
     pub const fn inset(&self, top: Scalar, left: Scalar, bottom: Scalar, right: Scalar) -> Self {
         Self::new(
-            Point::new(self.origin.x + right, self.origin.y + top),
+            Point::new(self.origin.x + left, self.origin.y + top),
             Size::new(
                 self.size.width - (left + right),
                 self.size.height - (top + bottom),
             ),
         )
+    }
+
+    #[inline]
+    pub const fn contains(&self, point: Point) -> bool {
+        if point.x < self.origin.x || point.x > self.right() {
+            return false;
+        }
+        if point.y < self.origin.y || point.y > self.bottom() {
+            return false;
+        }
+        true
     }
 }
 

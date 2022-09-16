@@ -5,8 +5,10 @@ use std::{
 };
 
 use pixui::{
-    gfx::{BdfFont, BlendMode, Color, Rect, Scalar, Size, Surface, U8SliceSurface, WriteSurface},
-    ui::{Border, Label, Margin, UI},
+    gfx::{
+        BdfFont, BlendMode, Color, Point, Rect, Scalar, Size, Surface, U8SliceSurface, WriteSurface,
+    },
+    ui::{Border, Feedback, HBox, Label, Margin, VBox, UI},
 };
 use sdl2::{
     event::{Event, WindowEvent},
@@ -55,6 +57,9 @@ fn main() -> io::Result<()> {
 
     let mut text = String::new();
     let mut fps = String::new();
+    let mut cursor = Point::ZERO;
+    let mut touch = false;
+    let mut offset = Point::ZERO;
 
     'running: loop {
         if event_timer.elapsed() >= Duration::from_millis(16) {
@@ -68,6 +73,12 @@ fn main() -> io::Result<()> {
                         ..
                     } => {
                         text.pop();
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Return),
+                        ..
+                    } => {
+                        text.push('\n');
                     }
                     Event::Window {
                         win_event: WindowEvent::Resized(width, height),
@@ -83,19 +94,25 @@ fn main() -> io::Result<()> {
                             )
                             .unwrap();
                     }
+                    Event::MouseMotion { x, y, .. } => cursor = Point::new(x, y) / SCALE_FACTOR,
+                    Event::MouseButtonDown { .. } => touch = true,
+                    Event::MouseButtonUp { .. } => touch = false,
                     _ => {}
                 }
             }
         }
 
+        let mut feedback = Feedback::default();
         texture
             .with_lock(None, |pixels, _| {
                 let mut surface =
                     U8SliceSurface::new(pixels, texture_size.width(), Rect::sized(texture_size));
+
                 surface.fill(surface.bounds(), Color::BLACK, BlendMode::None);
-                ui.render(
-                    surface.bounds(),
+                feedback = ui.render(
+                    surface.bounds().inset(cursor.y, cursor.x, 0, 0),
                     &mut surface,
+                    cursor,
                     &Border {
                         weight: 1,
                         color: Color::opaque(0, 255, 0),
@@ -113,7 +130,12 @@ fn main() -> io::Result<()> {
                                     bottom: 8,
                                     right: 8,
                                     child: Some(&Label {
-                                        text: format!("{fps} :: {}", text).as_str(),
+                                        id: Some("label"),
+                                        text: format!(
+                                            "({}, {}) :: {fps} :: {}",
+                                            cursor.x, cursor.y, text
+                                        )
+                                        .as_str(),
                                         color: Color::opaque(255, 0, 0),
                                         font: Some(&font),
                                         ..Default::default()
@@ -132,6 +154,13 @@ fn main() -> io::Result<()> {
 
         canvas.copy(&texture, None, None).unwrap();
         canvas.present();
+
+        if let Some(hit) = feedback.hit() {
+            if touch {
+                dbg!(hit, cursor);
+                offset = cursor.relative_to(hit.bounds().origin);
+            }
+        }
 
         frames += 1;
         if frame_timer.elapsed() >= Duration::from_secs(1) {

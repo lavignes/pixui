@@ -1,42 +1,46 @@
+use std::fmt::Debug;
+
 use crate::{
-    gfx::{Rect, Scalar, Size, WriteSurface},
-    ui::Widget,
+    gfx::{Point, Rect, Scalar, Size, WriteSurface},
+    ui::{Hit, Widget},
 };
 
 #[derive(Debug, Default)]
-pub struct Margin<'a> {
-    pub id: Option<&'a str>,
-    pub child: Option<&'a dyn Widget>,
+pub struct Margin<'a, I> {
+    pub id: Option<I>,
+    pub child: Option<&'a dyn Widget<I>>,
     pub top: Scalar,
     pub left: Scalar,
     pub bottom: Scalar,
     pub right: Scalar,
 }
 
-impl<'a> Widget for Margin<'a> {
-    fn id(&self) -> Option<&str> {
-        self.id
-    }
-
+impl<'a, I: Copy + Debug> Widget<I> for Margin<'a, I> {
     fn measure(&self, limits: Size) -> Size {
-        let margin_size: Size = (self.left + self.right, self.top + self.bottom).into();
+        let size: Size = (self.left + self.right, self.top + self.bottom).into();
         if let Some(child) = self.child {
-            let child_size = child.measure(Size::new(
-                limits.width - margin_size.width,
-                limits.height - margin_size.height,
-            ));
-            (child_size + margin_size).limit(limits)
+            let child_size = child.measure(limits - size);
+            (child_size + size).limit(limits)
         } else {
-            margin_size.limit(limits)
+            size.limit(limits)
         }
     }
 
-    fn render(&self, bounds: Rect, surface: &mut dyn WriteSurface) {
+    fn render(
+        &self,
+        bounds: Rect,
+        cursor: Point,
+        surface: &mut dyn WriteSurface,
+    ) -> Option<Hit<I>> {
         if let Some(child) = self.child {
-            child.render(
+            if let Some(hit) = child.render(
                 bounds.inset(self.top, self.left, self.bottom, self.right),
+                cursor,
                 surface,
-            );
+            ) {
+                return Some(hit);
+            }
         }
+        Hit::from_test(self.id, bounds, cursor)
     }
 }
