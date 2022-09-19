@@ -5,7 +5,7 @@ PIXUI:
 to a raster.
 * Is internally implemented as an immediate-mode library. Layout and rendering
 is done in ~2 passes with zero retained state.
-* Supports variable width PCF and BDF bitmap fonts.
+* Supports variable-width PCF and BDF bitmap fonts.
 * Elegant event-handling and response "system". See THEORY below.
 
 THEORY:

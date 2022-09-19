@@ -65,7 +65,6 @@ fn main() -> io::Result<()> {
 
     let mut cursor = Point::ZERO;
     let mut touch = false;
-    let mut over_offset = Point::ZERO;
 
     let mut drag = DragHandler::new();
     let mut overflow = OverflowHandler::new();
@@ -91,30 +90,6 @@ fn main() -> io::Result<()> {
                     } => {
                         text.push('\n');
                     }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Up),
-                        ..
-                    } => {
-                        over_offset.y -= 1;
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Down),
-                        ..
-                    } => {
-                        over_offset.y += 1;
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Left),
-                        ..
-                    } => {
-                        over_offset.x -= 1;
-                    }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Right),
-                        ..
-                    } => {
-                        over_offset.x += 1;
-                    }
                     Event::Window {
                         win_event: WindowEvent::Resized(width, height),
                         ..
@@ -137,15 +112,15 @@ fn main() -> io::Result<()> {
             }
         }
 
-        let mut size = Size::ZERO;
-        let mut feedback = Feedback::default();
+        let mut feedback1 = Feedback::default();
+        let mut feedback2 = Feedback::default();
         texture
             .with_lock(None, |pixels, _| {
                 let mut surface =
                     U8SliceSurface::new(pixels, texture_size.width(), Rect::sized(texture_size));
 
                 surface.fill(surface.bounds(), Color::BLACK, BlendMode::None);
-                feedback = ui.render(
+                feedback1 = ui.render(
                     surface.bounds().inset(
                         drag.translation().y.max(0),
                         drag.translation().x.max(0),
@@ -191,7 +166,7 @@ fn main() -> io::Result<()> {
                     },
                 );
 
-                feedback = ui.render(
+                feedback2 = ui.render(
                     surface.bounds(),
                     &mut surface,
                     cursor,
@@ -222,14 +197,14 @@ fn main() -> io::Result<()> {
         canvas.copy(&texture, None, None).unwrap();
         canvas.present();
 
-        drag.handle("my widget", touch, cursor, feedback.hit());
-        overflow.handle("overflow", touch, cursor, feedback.hit());
+        drag.handle("my widget", touch, cursor, feedback1.hit());
+        overflow.handle("overflow", touch, cursor, feedback2.hit());
 
-        if click.handle("my widget", touch, feedback.hit()) {
+        if click.handle("my widget", touch, feedback1.hit()) {
             text.push_str("CLICK ");
         }
 
-        if hit.handle("my widget", feedback.hit()) {
+        if hit.handle("my widget", feedback1.hit()) {
             text_color = Color::opaque(255, 0, 0);
         } else {
             text_color = Color::WHITE
