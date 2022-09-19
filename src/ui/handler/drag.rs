@@ -32,20 +32,19 @@ impl DragHandler {
         cursor: Point,
         hit: Option<&Hit<I>>,
     ) -> bool {
-        if let Some(hit) = hit {
-            if touch {
+        if touch {
+            if let Some(hit) = hit {
                 if self.touch_point.is_none() && hit.id() == &id {
                     self.touch_point = Some(cursor - hit.bounds().origin);
                 }
-            } else {
-                self.touch_point = None;
             }
-        }
-        if let Some(point) = self.touch_point {
-            self.translation = cursor - point;
-            true
+            if let Some(point) = self.touch_point {
+                self.translation = cursor - point;
+                return true;
+            }
         } else {
-            false
+            self.touch_point = None;
         }
+        false
     }
 }

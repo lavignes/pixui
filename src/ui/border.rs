@@ -40,7 +40,7 @@ impl<'a, I: Copy> Widget<I> for Border<'a, I> {
         );
         surface.fill(
             Rect::new(
-                Point::new(bounds.right() - self.weight + 1, 0),
+                Point::new(bounds.right() - self.weight + 1, bounds.origin.y),
                 Size::new(self.weight, bounds.size.height),
             ),
             self.color,
@@ -48,7 +48,7 @@ impl<'a, I: Copy> Widget<I> for Border<'a, I> {
         );
         surface.fill(
             Rect::new(
-                Point::new(0, bounds.bottom() - self.weight + 1),
+                Point::new(bounds.origin.x, bounds.bottom() - self.weight + 1),
                 Size::new(bounds.size.width, self.weight),
             ),
             self.color,

@@ -26,7 +26,7 @@ impl OverflowHandler {
     }
 
     #[inline]
-    pub fn is_held(&self) -> bool {
+    pub fn is_scrolling(&self) -> bool {
         self.touch_point.is_some()
     }
 
@@ -47,22 +47,21 @@ impl OverflowHandler {
         cursor: Point,
         hit: Option<&Hit<I>>,
     ) -> bool {
-        if let Some(hit) = hit {
-            if touch {
+        if touch {
+            if let Some(hit) = hit {
                 if self.touch_point.is_none() && hit.id() == &id {
                     self.touch_point = Some(cursor - hit.bounds().origin);
                 }
-            } else {
-                self.touch_point = None;
             }
-        }
-        if let Some(point) = self.touch_point {
-            self.touch_point = Some(cursor);
-            let offset = self.offset + (point - cursor);
-            self.offset = Point::new(0, offset.y.max(0).min(self.content_size.height));
-            true
+            if let Some(point) = self.touch_point {
+                self.touch_point = Some(cursor);
+                let offset = self.offset + (point - cursor);
+                self.offset = Point::new(0, offset.y.max(0).min(self.content_size.height));
+                return true;
+            }
         } else {
-            false
+            self.touch_point = None;
         }
+        false
     }
 }
