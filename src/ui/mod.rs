@@ -1,20 +1,26 @@
 mod border;
 mod handler;
 mod hbox;
+mod hspan;
 mod label;
 mod margin;
+mod overflow;
 mod stack;
 mod vbox;
+mod vspan;
 
 use std::{cell::RefCell, fmt::Debug};
 
 pub use border::*;
 pub use handler::*;
 pub use hbox::*;
+pub use hspan::*;
 pub use label::*;
 pub use margin::*;
+pub use overflow::*;
 pub use stack::*;
 pub use vbox::*;
+pub use vspan::*;
 
 use crate::gfx::{Point, Rect, Size, WriteSurface};
 
@@ -96,7 +102,7 @@ struct Callbacks<M> {
     measure: Option<M>,
 }
 
-pub struct Interceptor<'a, I, M> {
+struct Interceptor<'a, I, M> {
     state: RefCell<Callbacks<M>>,
     child: &'a dyn Widget<I>,
 }

@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign};
 
 pub type Scalar = i32;
 
@@ -10,6 +10,7 @@ pub struct Point {
 
 impl Point {
     pub const ZERO: Self = Self::new(0, 0);
+    pub const MAX: Self = Self::new(Scalar::MAX, Scalar::MAX);
 
     #[inline]
     pub const fn new(x: Scalar, y: Scalar) -> Self {
@@ -33,12 +34,33 @@ impl Add for Point {
     }
 }
 
+impl AddAssign for Point {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
 impl Sub for Point {
     type Output = Self;
 
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output {
         Self::new(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl SubAssign for Point {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
+    }
+}
+
+impl Neg for Point {
+    type Output = Self;
+
+    #[inline]
+    fn neg(self) -> Self::Output {
+        Self::new(-self.x, -self.y)
     }
 }
 

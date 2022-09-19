@@ -28,7 +28,32 @@ impl<'a, I: Copy> Widget<I> for Border<'a, I> {
         cursor: Point,
         surface: &mut dyn WriteSurface,
     ) -> Option<Hit<I>> {
-        surface.rect(bounds, self.color, BlendMode::Blend);
+        surface.fill(
+            Rect::new(bounds.origin, Size::new(bounds.size.width, self.weight)),
+            self.color,
+            BlendMode::Blend,
+        );
+        surface.fill(
+            Rect::new(bounds.origin, Size::new(self.weight, bounds.size.height)),
+            self.color,
+            BlendMode::Blend,
+        );
+        surface.fill(
+            Rect::new(
+                Point::new(bounds.right() - self.weight + 1, 0),
+                Size::new(self.weight, bounds.size.height),
+            ),
+            self.color,
+            BlendMode::Blend,
+        );
+        surface.fill(
+            Rect::new(
+                Point::new(0, bounds.bottom() - self.weight + 1),
+                Size::new(bounds.size.width, self.weight),
+            ),
+            self.color,
+            BlendMode::Blend,
+        );
         if let Some(child) = self.child {
             let hit = child.render(
                 bounds.inset(self.weight, self.weight, self.weight, self.weight),

@@ -8,7 +8,10 @@ use pixui::{
     gfx::{
         BdfFont, BlendMode, Color, Point, Rect, Scalar, Size, Surface, U8SliceSurface, WriteSurface,
     },
-    ui::{Border, DragHandler, Feedback, HitHandler, Interceptor, Label, Margin, TapHandler, UI},
+    ui::{
+        Border, DragHandler, Feedback, HSpan, HitHandler, Label, Margin, Overflow, OverflowHandler,
+        TapHandler, VSpan, UI,
+    },
 };
 use sdl2::{
     event::{Event, WindowEvent},
@@ -62,8 +65,10 @@ fn main() -> io::Result<()> {
 
     let mut cursor = Point::ZERO;
     let mut touch = false;
+    let mut over_offset = Point::ZERO;
 
     let mut drag = DragHandler::new();
+    let mut overflow = OverflowHandler::new();
     let mut click = TapHandler::new();
     let mut hit = HitHandler::new();
 
@@ -85,6 +90,30 @@ fn main() -> io::Result<()> {
                         ..
                     } => {
                         text.push('\n');
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Up),
+                        ..
+                    } => {
+                        over_offset.y -= 1;
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Down),
+                        ..
+                    } => {
+                        over_offset.y += 1;
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Left),
+                        ..
+                    } => {
+                        over_offset.x -= 1;
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Right),
+                        ..
+                    } => {
+                        over_offset.x += 1;
                     }
                     Event::Window {
                         win_event: WindowEvent::Resized(width, height),
@@ -116,52 +145,78 @@ fn main() -> io::Result<()> {
                     U8SliceSurface::new(pixels, texture_size.width(), Rect::sized(texture_size));
 
                 surface.fill(surface.bounds(), Color::BLACK, BlendMode::None);
+                // feedback = ui.render(
+                //     surface.bounds().inset(
+                //         drag.translation().y.max(0),
+                //         drag.translation().x.max(0),
+                //         0,
+                //         0,
+                //     ),
+                //     &mut surface,
+                //     cursor,
+                //     &Border {
+                //         id: Some("my widget"),
+                //         weight: 1,
+                //         color: Color::opaque(0, 255, 0),
+                //         child: Some(&Margin {
+                //             top: 2,
+                //             left: 2,
+                //             bottom: 2,
+                //             right: 2,
+                //             child: Some(&Border {
+                //                 weight: 1,
+                //                 color: Color::WHITE,
+                //                 child: Some(&Margin {
+                //                     top: 8,
+                //                     left: 8,
+                //                     bottom: 8,
+                //                     right: 8,
+                //                     child: Some(&Interceptor::measure(
+                //                         |_, s| {
+                //                             size = s;
+                //                             s
+                //                         },
+                //                         &Label {
+                //                             text: format!(
+                //                                 "({}, {}) :: {fps} :: {}",
+                //                                 cursor.x, cursor.y, text
+                //                             )
+                //                             .as_str(),
+                //                             color: text_color,
+                //                             font: Some(&font),
+                //                             ..Default::default()
+                //                         },
+                //                     )),
+                //                     ..Default::default()
+                //                 }),
+                //                 ..Default::default()
+                //             }),
+                //             ..Default::default()
+                //         }),
+                //         ..Default::default()
+                //     },
+                // );
+
                 feedback = ui.render(
-                    surface.bounds().inset(
-                        drag.translation().y.max(0),
-                        drag.translation().x.max(0),
-                        0,
-                        0,
-                    ),
+                    surface.bounds(),
                     &mut surface,
                     cursor,
                     &Border {
-                        id: Some("my widget"),
                         weight: 1,
-                        color: Color::opaque(0, 255, 0),
-                        child: Some(&Margin {
-                            top: 2,
-                            left: 2,
-                            bottom: 2,
-                            right: 2,
-                            child: Some(&Border {
-                                weight: 1,
-                                color: Color::WHITE,
-                                child: Some(&Margin {
-                                    top: 8,
-                                    left: 8,
-                                    bottom: 8,
-                                    right: 8,
-                                    child: Some(&Interceptor::measure(
-                                        |_, s| {
-                                            size = s;
-                                            s
-                                        },
-                                        &Label {
-                                            text: format!(
-                                                "({}, {}) :: {fps} :: {}",
-                                                cursor.x, cursor.y, text
-                                            )
-                                            .as_str(),
-                                            color: text_color,
-                                            font: Some(&font),
-                                            ..Default::default()
-                                        },
-                                    )),
+                        color: Color::opaque(32, 32, 32),
+                        child: Some(&VSpan {
+                            child: Some(&overflow.measure(&Overflow {
+                                id: Some("overflow"),
+                                offset: overflow.offset(),
+                                child: Some(&Label {
+                                    id: Some("my widget"),
+                                    text: &format!("{fps} {text}"),
+                                    color: text_color,
+                                    font: Some(&font),
                                     ..Default::default()
                                 }),
                                 ..Default::default()
-                            }),
+                            })),
                             ..Default::default()
                         }),
                         ..Default::default()
@@ -173,7 +228,8 @@ fn main() -> io::Result<()> {
         canvas.copy(&texture, None, None).unwrap();
         canvas.present();
 
-        drag.handle("my widget", touch, cursor, feedback.hit());
+        // drag.handle("overflow", touch, cursor, feedback.hit());
+        overflow.handle("overflow", touch, cursor, feedback.hit());
 
         if click.handle("my widget", touch, feedback.hit()) {
             text.push_str("CLICK ");
